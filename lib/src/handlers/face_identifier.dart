@@ -55,7 +55,12 @@ class FaceIdentifier {
   }
 
   static Future<DetectedFace?> _detectFace({required visionImage}) async {
-    final options = FaceDetectorOptions();
+    final options = FaceDetectorOptions(
+      enableLandmarks: true,
+      enableClassification: true,
+      enableTracking: true,
+      performanceMode: FaceDetectorMode.accurate,
+    );
     final faceDetector = FaceDetector(options: options);
     try {
       final List<Face> faces = await faceDetector.processImage(visionImage);

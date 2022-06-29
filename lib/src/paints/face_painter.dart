@@ -14,14 +14,14 @@ class FacePainter extends CustomPainter {
 
     if (face!.headEulerAngleY! > 10 || face!.headEulerAngleY! < -10) {
       paint = Paint()
-        ..style = PaintingStyle.stroke
+        ..style = PaintingStyle.fill
         ..strokeWidth = 3.0
-        ..color = Colors.red;
+        ..color = Colors.yellow.withOpacity(.5);
     } else {
       paint = Paint()
-        ..style = PaintingStyle.stroke
+        ..style = PaintingStyle.fill
         ..strokeWidth = 3.0
-        ..color = Colors.green;
+        ..color = Colors.green.withOpacity(.5);
     }
 
     scaleX = size.width / imageSize.width;

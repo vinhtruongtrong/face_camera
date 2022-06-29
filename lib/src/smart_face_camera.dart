@@ -13,6 +13,16 @@ import 'paints/hole_painter.dart';
 import 'res/builders.dart';
 import 'utils/logger.dart';
 
+import 'dart:developer' as developer;
+
+typedef LivenessDection = void Function(
+  double? leftEyeOpenProbability,
+  double? rightEyeOpenProbability,
+  double? smilingProbability,
+  bool? wellPositioned,
+  int? trackingId,
+);
+
 class SmartFaceCamera extends StatefulWidget {
   final ImageResolution imageResolution;
   final CameraLens? defaultCameraLens;
@@ -31,6 +41,7 @@ class SmartFaceCamera extends StatefulWidget {
   final Widget? lensControlIcon;
   final FlashControlBuilder? flashControlBuilder;
   final MessageBuilder? messageBuilder;
+  final LivenessDection? livenessDetection;
 
   const SmartFaceCamera(
       {this.imageResolution = ImageResolution.medium,
@@ -51,6 +62,7 @@ class SmartFaceCamera extends StatefulWidget {
       this.lensControlIcon,
       this.flashControlBuilder,
       this.messageBuilder,
+      this.livenessDetection,
       Key? key})
       : super(key: key);
 
@@ -184,41 +196,24 @@ class _SmartFaceCameraState extends State<SmartFaceCamera>
       children: [
         if (cameraController != null &&
             cameraController.value.isInitialized) ...[
-          Transform.scale(
-            scale: 1.0,
-            child: AspectRatio(
-              aspectRatio: size.aspectRatio,
-              child: OverflowBox(
-                alignment: Alignment.center,
-                child: FittedBox(
-                  fit: BoxFit.fitHeight,
-                  child: SizedBox(
-                    width: size.width,
-                    height: size.width * cameraController.value.aspectRatio,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: <Widget>[
-                        _cameraDisplayWidget(),
-                        if (_detectedFace != null) ...[
-                          SizedBox(
-                              width: cameraController.value.previewSize!.width,
-                              height:
-                                  cameraController.value.previewSize!.height,
-                              child: CustomPaint(
-                                painter: FacePainter(
-                                    face: _detectedFace!.face,
-                                    imageSize: Size(
-                                      _controller!.value.previewSize!.height,
-                                      _controller!.value.previewSize!.width,
-                                    )),
-                              ))
-                        ]
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          Stack(
+            // fit: StackFit.expand,
+            children: <Widget>[
+              _cameraDisplayWidget(),
+              if (_detectedFace != null) ...[
+                SizedBox(
+                    width: cameraController.value.previewSize!.width,
+                    height: cameraController.value.previewSize!.height,
+                    child: CustomPaint(
+                      painter: FacePainter(
+                          face: _detectedFace!.face,
+                          imageSize: Size(
+                            _controller!.value.previewSize!.height,
+                            _controller!.value.previewSize!.width,
+                          )),
+                    ))
+              ]
+            ],
           )
         ] else ...[
           const Text('No Camera Detected',
@@ -442,6 +437,17 @@ class _SmartFaceCameraState extends State<SmartFaceCamera>
 
           if (result != null) {
             try {
+              final face = result.face;
+              developer.log(
+                  'trackingId: ${face.trackingId} leftEyeOpenProbability: ${face.leftEyeOpenProbability}\nrightEyeOpenProbability: ${face.rightEyeOpenProbability}\nsmilingProbability${face.smilingProbability}',
+                  name: 'FaceIdentifier');
+              widget.livenessDetection?.call(
+                face.leftEyeOpenProbability,
+                face.rightEyeOpenProbability,
+                face.smilingProbability,
+                result.wellPositioned,
+                face.trackingId,
+              );
               if (widget.autoCapture && result.wellPositioned) {
                 _onTakePictureButtonPressed();
               }
